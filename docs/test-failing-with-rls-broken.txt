@@ -1,4 +1,4 @@
-# Playwright run with RLS broken on purpose (migration 20261027070000_break_rls_on_purpose.sql)
+# Playwright run with RLS broken on purpose (migration 20261027061554_break_rls_on_purpose.sql)
 # Run on 2026-10-27 01:16 CDT
 
 
