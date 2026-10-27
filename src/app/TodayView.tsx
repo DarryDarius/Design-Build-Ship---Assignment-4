@@ -28,8 +28,10 @@ export function TodayView() {
   if (!store || !today) return <Skeleton />;
   const { sessions } = store.data;
 
-  const quickLog = (course: string, minutes: number, place = "") => {
-    const s = addSession({ course, minutes, place, date: today });
+  const quickLog = (course: string, minutes: number, place = "", bookId: string | null = null) => {
+    // Only keep the book if it's still on the shelf.
+    const book = bookId && store.data.books.some((b) => b.id === bookId) ? bookId : null;
+    const s = addSession({ course, minutes, place, date: today, bookId: book });
     router.push(`/week?added=${s.id}`);
   };
 
@@ -57,6 +59,14 @@ export function TodayView() {
           </ul>
           <p className="mt-3 text-sm text-calm-muted">Tap one, and it counts toward today.</p>
         </div>
+
+        <div className="mt-8 border-t border-calm-border pt-6">
+          <h2 className="font-medium">Studying from a textbook?</h2>
+          <p className="mt-1 text-sm text-calm-muted">Put it on your shelf, and you can log time against it.</p>
+          <ButtonLink href="/shelf" variant="secondary" className="mt-3">
+            Find a book
+          </ButtonLink>
+        </div>
       </section>
 
       <section aria-labelledby="week-h">
@@ -73,7 +83,15 @@ export function TodayView() {
 }
 
 /** Coming back: progress first, then the fastest way to log again. */
-function WelcomeBack({ data, today, onLog }: { data: Data; today: string; onLog: (course: string, minutes: number, place?: string) => void }) {
+function WelcomeBack({
+  data,
+  today,
+  onLog,
+}: {
+  data: Data;
+  today: string;
+  onLog: (course: string, minutes: number, place?: string, bookId?: string | null) => void;
+}) {
   const { sessions } = data;
   const week = sessionsInWeek(sessions, today);
   const minutes = total(week);
@@ -120,7 +138,7 @@ function WelcomeBack({ data, today, onLog }: { data: Data; today: string; onLog:
           Pick up where you left off
         </h2>
         <div className="mt-3 flex flex-wrap gap-3">
-          <Button onClick={() => onLog(last.course, last.minutes, last.place)}>
+          <Button onClick={() => onLog(last.course, last.minutes, last.place, last.bookId)}>
             Log again: {last.course} · {last.minutes} min
           </Button>
           <ButtonLink href="/log" variant="secondary">

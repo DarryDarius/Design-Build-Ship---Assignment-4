@@ -9,7 +9,7 @@ import { EmptyState, Skeleton } from "@/components/EmptyState";
 import { Progress } from "@/components/Progress";
 import { Toast, toastAction } from "@/components/Toast";
 import { WeekStrip } from "@/components/WeekStrip";
-import { removeSession, useStudyLog, useToday } from "@/lib/store";
+import { removeSession, useStudyLog, useToday, type Book } from "@/lib/store";
 import {
   addDays,
   byCourse,
@@ -84,7 +84,7 @@ export function WeekView() {
       <div aria-live="polite" aria-atomic="true">
         {store && today && toast}
       </div>
-      {!store || !today ? <Skeleton /> : <Week sessions={sessions} today={today} showLast={showLast} highlight={addedSession?.id} />}
+      {!store || !today ? <Skeleton /> : <Week sessions={sessions} books={store.data.books} today={today} showLast={showLast} highlight={addedSession?.id} />}
       {/* Room at the bottom so the toast never covers the last row. */}
       {toast && <div aria-hidden className="h-20" />}
     </>
@@ -93,7 +93,20 @@ export function WeekView() {
 
 const weekLink = `inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-sm text-calm-muted hover:bg-calm-surface hover:text-calm-text ${focusRing}`;
 
-function Week({ sessions, today, showLast, highlight }: { sessions: Session[]; today: string; showLast: boolean; highlight?: string }) {
+function Week({
+  sessions,
+  books,
+  today,
+  showLast,
+  highlight,
+}: {
+  sessions: Session[];
+  books: Book[];
+  today: string;
+  showLast: boolean;
+  highlight?: string;
+}) {
+  const bookTitle = (id: string | null) => books.find((b) => b.id === id)?.title;
   // "Last week" shows the days before this Monday, so a session logged for Sunday is never out of sight.
   const anchor = showLast ? addDays(weekStart(today), -1) : today;
   const week = sessionsInWeek(sessions, anchor);
@@ -163,7 +176,9 @@ function Week({ sessions, today, showLast, highlight }: { sessions: Session[]; t
                   <span className="text-calm-muted tabular-nums">{formatMinutes(total(list))}</span>
                 </h3>
                 <ul>
-                  {list.map((s) => (
+                  {list.map((s) => {
+                    const detail = [bookTitle(s.bookId), s.place].filter(Boolean).join(" · ");
+                    return (
                     <li
                       key={s.id}
                       className={`flex items-baseline justify-between gap-4 border-b border-calm-border px-2 py-3 transition-colors ${
@@ -172,11 +187,12 @@ function Week({ sessions, today, showLast, highlight }: { sessions: Session[]; t
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-display text-lg">{s.course}</span>
-                        {s.place && <span className="block truncate text-sm text-calm-muted">{s.place}</span>}
+                        {detail && <span className="block truncate text-sm text-calm-muted">{detail}</span>}
                       </span>
                       <span className="shrink-0 text-calm-muted tabular-nums">{s.minutes} min</span>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             );
