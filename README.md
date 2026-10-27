@@ -2,7 +2,7 @@
 
 Put the books you're studying on a shelf, log the hours you spend on them, and watch your week add up toward 10 hours, on any device. Built for MPCS 51238 Design, Build, Ship, Assignment 4 (Full Stack App).
 
-**Live:** _added after deploy_ · **Style:** the Calm design system from [Assignment 2](https://study-spots-alpha.vercel.app/design-systems/calm)
+**Live:** https://study-shelf-ruby.vercel.app · **Style:** the Calm design system from [Assignment 2](https://study-spots-alpha.vercel.app/design-systems/calm)
 
 Study Shelf grows out of [Study Log](https://study-log-ashy.vercel.app) (Assignment 3). Assignment 2 told you *where* to study; Study Log tracked *how much*; Study Shelf adds *what*: the textbooks and readings, found through Open Library. It also moves everything from one browser's `localStorage` into an account, so it follows you.
 
