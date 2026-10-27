@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
 import { SavedFooter, SaveStatus } from "@/components/SaveStatus";
+import { StoreConnector } from "@/components/StoreConnector";
 import { calmAppearance } from "@/lib/clerkAppearance";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           signInFallbackRedirectUrl="/"
           signUpFallbackRedirectUrl="/"
         >
+          <StoreConnector />
           <Nav />
           <SaveStatus />
           <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8 sm:px-6 sm:py-12">{children}</main>

@@ -8,6 +8,7 @@ export type Session = {
   minutes: number;
   place: string;
   date: string;
+  bookId: string | null; // a book on the person's shelf, if the session was for one
   createdAt: number;
 };
 

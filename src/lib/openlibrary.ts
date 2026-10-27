@@ -1,13 +1,5 @@
 import { cacheLife } from "next/cache";
-
-// What the app keeps from an Open Library search result.
-export type BookResult = {
-  olKey: string; // "/works/OL4781294W"
-  title: string;
-  authors: string; // first three authors, joined
-  coverId: number | null;
-  firstYear: number | null;
-};
+import type { BookResult } from "./books";
 
 const FIELDS = "key,title,author_name,first_publish_year,cover_i";
 const WORK_KEY = /^\/works\/OL\d+W$/;
@@ -45,5 +37,3 @@ export async function searchBooks(query: string): Promise<BookResult[]> {
   const body = (await res.json()) as { docs?: Doc[] };
   return (Array.isArray(body.docs) ? body.docs : []).map(toResult).filter((b): b is BookResult => b !== null);
 }
-
-export const coverUrl = (id: number, size: "S" | "M" | "L" = "M") => `https://covers.openlibrary.org/b/id/${id}-${size}.jpg`;

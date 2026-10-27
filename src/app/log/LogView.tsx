@@ -1,33 +1,43 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/Button";
 import { Chip } from "@/components/Chip";
 import { Skeleton } from "@/components/EmptyState";
 import { describedBy, Field, Input, Select } from "@/components/Field";
 import { PLACES } from "@/lib/places";
-import { addSession, lastSession, saveDraft, useStudyLog, useToday, type Draft } from "@/lib/store";
+import { focusRing } from "@/components/styles";
+import { addSession, lastSession, saveDraft, useStudyLog, useToday, type Book, type Draft } from "@/lib/store";
 import { FIELD_ORDER, validateSession } from "@/lib/validate";
 import { addDays, earliestDay, isSameWeek, type Session } from "@/lib/week";
 
 export function LogView() {
   const store = useStudyLog();
   const today = useToday();
+  const bookParam = useSearchParams().get("book"); // from "Log time" on the shelf
   if (!store || !today) return <Skeleton />;
 
-  const { sessions, draft } = store.data;
+  const { sessions, books, draft } = store.data;
+  const onShelf = (id: string | null | undefined) => (id && books.some((b) => b.id === id) ? id : "");
   const last = lastSession(sessions);
   // Pick up an unfinished draft, or prefill from the last session. The course
   // starts empty (typing into a prefilled name appended to it); recent courses
   // are one tap away as chips.
-  const initial: Draft = draft ?? {
+  const base: Draft = draft ?? {
     course: "",
     minutes: last ? String(last.minutes) : "",
     place: last?.place ?? "",
     date: today,
+    bookId: "",
   };
-  return <LogForm initial={initial} sessions={sessions} today={today} />;
+  const picked = books.find((b) => b.id === bookParam);
+  const initial: Draft = picked
+    ? { ...base, bookId: picked.id, course: base.course || picked.title.slice(0, 60) }
+    : { ...base, bookId: onShelf(base.bookId) };
+  // The key starts the form over when "Log time" is pressed for a different book.
+  return <LogForm key={bookParam ?? ""} initial={initial} sessions={sessions} books={books} today={today} />;
 }
 
 function recentCourses(sessions: Session[]) {
@@ -39,7 +49,7 @@ function recentCourses(sessions: Session[]) {
   return seen;
 }
 
-function LogForm({ initial, sessions, today }: { initial: Draft; sessions: Session[]; today: string }) {
+function LogForm({ initial, sessions, books, today }: { initial: Draft; sessions: Session[]; books: Book[]; today: string }) {
   const router = useRouter();
   const [values, setValues] = useState<Draft>(initial);
   const [submitted, setSubmitted] = useState(false);
@@ -64,7 +74,8 @@ function LogForm({ initial, sessions, today }: { initial: Draft; sessions: Sessi
       document.getElementById(first)?.focus();
       return;
     }
-    const s = addSession({ course: values.course.trim(), minutes: Number(values.minutes), place: values.place, date: values.date });
+    const bookId = books.some((b) => b.id === values.bookId) ? values.bookId : null;
+    const s = addSession({ course: values.course.trim(), minutes: Number(values.minutes), place: values.place, date: values.date, bookId });
     saveDraft(undefined);
     router.push(isSameWeek(s.date, today) ? `/week?added=${s.id}` : `/week?week=last&added=${s.id}`);
   }
@@ -130,6 +141,46 @@ function LogForm({ initial, sessions, today }: { initial: Draft; sessions: Sessi
             invalid={!!errors.minutes}
             aria-describedby={describedBy("minutes", true, errors.minutes)}
           />
+        </Field>
+
+        <Field
+          id="book"
+          label="Which book?"
+          optional
+          hint={
+            books.length === 0 ? (
+              <>
+                Put a book on{" "}
+                <Link href="/shelf" className={`rounded-sm underline decoration-calm-border decoration-2 underline-offset-4 hover:decoration-calm-accent ${focusRing}`}>
+                  your shelf
+                </Link>{" "}
+                to log time against it.
+              </>
+            ) : undefined
+          }
+        >
+          <Select
+            id="book"
+            name="book"
+            value={values.bookId}
+            disabled={books.length === 0}
+            aria-describedby={describedBy("book", books.length === 0)}
+            onChange={(e) => {
+              const book = books.find((b) => b.id === e.target.value);
+              // Picking a book fills in an empty "What did you study?" with its title.
+              const next = { ...values, bookId: e.target.value, course: values.course.trim() || !book ? values.course : book.title.slice(0, 60) };
+              setValues(next);
+              saveDraft(next);
+            }}
+          >
+            <option value="">No book</option>
+            {books.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.title}
+                {b.authors ? ` · ${b.authors.split(", ")[0]}` : ""}
+              </option>
+            ))}
+          </Select>
         </Field>
 
         <Field id="place" label="Where?" optional>

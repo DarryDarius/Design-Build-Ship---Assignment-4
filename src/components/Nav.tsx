@@ -8,6 +8,7 @@ import { focusRing } from "./styles";
 
 const links = [
   { href: "/", label: "Today" },
+  { href: "/shelf", label: "Shelf" },
   { href: "/log", label: "Log" },
   { href: "/week", label: "This week" },
 ];
