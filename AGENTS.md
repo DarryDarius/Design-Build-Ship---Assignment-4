@@ -56,7 +56,8 @@ Kept in the browser only, per signed-in user, not in the database: the form draf
 - books: select, insert, delete. sessions: select, insert, delete (Undo). No update policies until a feature needs one.
 - Schema changes are SQL migrations in `supabase/migrations/`, applied through the Supabase MCP server.
 - The browser talks to Supabase with the publishable key plus the Clerk token. Never use the Supabase secret key in this app.
-- `src/proxy.ts` sends signed-out visitors to sign-in for every page except `/`, `/sign-in` and `/sign-up`. Signed-out `/` is a landing page that shows no data.
+- `src/proxy.ts` stays a bare `clerkMiddleware()` (Clerk 7 deprecates `createRouteMatcher`). Each private page calls `await auth.protect()` (signed out → sign-in), each Route Handler checks `auth()` and returns 401. Signed-out `/` is a landing page that shows no data.
+- With `cacheComponents`, anything that reads auth or the URL (`auth()`, server `<Show>`, `usePathname()`, `<SignIn />`) renders inside `<Suspense>`, or next to a `loading.tsx` for pages that call `auth.protect()`.
 
 ## Where the API is called
 On our server, in `src/app/api/books/route.ts`, for signed-in users only. It sets a 6-second timeout, caches results for a day, sends a User-Agent, and returns only the fields above. The browser never calls Open Library directly (covers are plain `<img>` tags). Every search shows a designed state: loading, results, nothing found, and "Open Library isn't answering".
