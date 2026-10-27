@@ -1,41 +1,48 @@
-# Study Log flows
+# Study Shelf flows
 
-**Main task:** I log a study session → it counts toward my week → I come back on Thursday, and my progress is still there.
+**Main task:** I find my textbook → put it on my shelf → log 45 minutes of reading it → sign in on my laptop later, and the book and my week are still there.
 
 ```mermaid
 flowchart TD
-  open([Open Study Log]) --> load{Anything saved<br/>on this device?}
-  load -- "storage blocked" --> warn[Notice: this browser isn't saving.<br/>Tool still works for this visit] --> first
+  open([Open Study Shelf]) --> signed{Signed in?}
+  signed -- "no" --> landing["<b>/ Landing</b><br/>What it does · Create account · Sign in<br/>no one's data"]
+  landing --> clerk["Clerk sign-up / sign-in"] --> load
+  signed -- "yes" --> load{Load my shelf and sessions<br/>from Supabase}
+  load -- "fails" --> failed["Banner: couldn't load · Try again"] --> load
 
-  %% 1. First visit
-  load -- "no" --> first["<b>/ Today · first visit</b><br/>What did you study today?<br/>One-tap starters + Log a session"]
-  first -- "tap a starter<br/>(Reading · 25 min)" --> saved
-  first -- "Log a session" --> form
+  %% First visit
+  load -- "nothing yet" --> first["<b>/ Today · first visit</b><br/>One-tap starters · Log a session · Find a book"]
+  first -- "Find a book" --> shelf
+  first -- "tap a starter" --> saved
 
-  %% 2. Main task: the form
-  form["<b>/log · Log a session</b><br/>What · Minutes · Where · Day<br/>last values prefilled, draft saved as you type"] --> submit{Valid?}
-  submit -- "no" --> errors["Errors next to each field<br/>say what to do next<br/>typed values kept, focus on first error"] --> form
-  submit -- "yes" --> saved[(Saved to localStorage)]
+  %% The shelf
+  shelf["<b>/shelf</b><br/>Search Open Library"] --> search{Search}
+  search -- "loading" --> skel["Placeholder rows<br/>'It can take a few seconds'"] --> search
+  search -- "nothing found" --> none["No books match … · try the title or author"]
+  search -- "Open Library down" --> down["Open Library isn't answering · Try again"]
+  search -- "results" --> results["Add to shelf"] --> added[(Saved to Supabase)]
+  added --> toastB["Toast: Added … · Undo"]
+  added -- "Log time" --> form
 
-  %% 3. It's on my list
-  saved --> week["<b>/week · This week</b><br/>Progress toward 10 h · 7-day strip<br/>sessions by day"]
-  week --> toast["Toast: Logged 25 min of Reading · Undo"]
-  toast -- "Undo" --> removed[Session removed] --> week
-  week -- "Log another" --> form
+  %% The form
+  form["<b>/log</b><br/>What · Minutes · Which book? · Where · Day"] --> valid{Valid?}
+  valid -- "no" --> errors["Errors next to each field · typed values kept"] --> form
+  valid -- "yes" --> saved[(Saved to Supabase)]
+  saved --> week["<b>/week</b><br/>Progress · 7-day strip · sessions with their book"]
+  week --> toast["Toast: Logged … · Undo"]
 
-  %% 4. Coming back
-  load -- "yes" --> sameWeek{Same week as<br/>last visit?}
-  sameWeek -- "yes" --> back["<b>/ Today · welcome back</b><br/>Progress, minutes left, pace<br/>Log again: last session"]
-  sameWeek -- "no, new week" --> newWeek["Welcome back · New week<br/>Last week you studied 6 h 10 m"] --> back
-  back -- "Log again (one tap)" --> saved
-  back -- "Log a session" --> form
-  back -- "This week" --> week
+  %% Coming back, any device
+  load -- "has data" --> back["<b>/ Today · welcome back</b><br/>Progress · pace · Log again"]
+  back -- "Log again" --> saved
+  back --> week
 ```
 
 ## States per page
 
 | Page | Empty / first | Loading | Error | Success |
 |---|---|---|---|---|
-| `/` | Starters, empty 7-day strip as an invitation | Skeleton until storage is read | "Not saving" notice | Welcome back with progress |
-| `/log` | Prefilled defaults | Skeleton | Field errors with next step | Redirect to `/week` with toast |
-| `/week` | "No sessions this week yet" + Log a session | Skeleton | "Not saving" notice | Toast with Undo |
+| `/` signed out | Landing, no data | — | — | Sign up / Sign in |
+| `/` signed in | Starters + Find a book | Skeleton | Couldn't load · Try again | Welcome back with progress |
+| `/shelf` | "Your shelf is empty" | Placeholder rows, then "It can take a few seconds" | Nothing found · Open Library isn't answering · Signed out | Toast "Added … · Undo" |
+| `/log` | Defaults, "No book" (links to the shelf) | Skeleton | Field errors with next step; "didn't save" banner | Redirect to `/week` with toast |
+| `/week` | "No sessions this week yet" + Log a session | Skeleton | Couldn't load · Try again | Toast with Undo |
