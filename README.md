@@ -159,7 +159,7 @@ Built with Claude Code, step by step, on the branch `feature/full-stack`. Things
 - **Caught:** the footer still said "Saved on this device. No account needed." after accounts were added.
 - **Caught by the Supabase advisor:** the RLS policies re-evaluated the token per row, and a foreign key had no index; both fixed in a migration.
 - **Caught:** the first test run failed on its own locator (a course name shows twice on `/week`), not on the app; scoped to the Sessions list.
-- `/security-review` was run on the branch before merging; see the PR.
+- `/security-review` was run on the branch before merging: no findings. See [`docs/security-review.md`](docs/security-review.md).
 
 ## Free tiers
 
