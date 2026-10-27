@@ -1,0 +1,37 @@
+# Playwright run with RLS broken on purpose (migration 20261027070000_break_rls_on_purpose.sql)
+# Run on 2026-10-27 01:16 CDT
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/isolation.spec.ts:57:5 › two people each save something, and neither can see the other's (28.2s)
+
+
+  1) [chromium] › tests/isolation.spec.ts:57:5 › two people each save something, and neither can see the other's 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByText('B\'s reading mvqal3hq', { exact: true })
+    Expected: 0
+    Received: 2
+    Timeout:  20000ms
+
+    Call log:
+      - Expect "toHaveCount" getByText('B\'s reading mvqal3hq', { exact: true }) with timeout 20000ms
+      - waiting for getByText('B\'s reading mvqal3hq', { exact: true })
+        44 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      46 |   const list = page.getByRole("region", { name: "Sessions" });
+      47 |   await expect(list.getByText(mine, { exact: true })).toBeVisible(); // loaded, and mine is there
+    > 48 |   await expect(page.getByText(theirs, { exact: true })).toHaveCount(0); // nowhere on the page
+         |                                                         ^
+      49 | }
+      50 |
+      51 | async function expectShelf(page: Page, mine: string, theirs: string) {
+        at expectSessions (/Users/darius/Desktop/design, build, ship/assignment4/study-shelf/tests/isolation.spec.ts:48:57)
+        at /Users/darius/Desktop/design, build, ship/assignment4/study-shelf/tests/isolation.spec.ts:73:3
+
+    Error Context: test-results/isolation-two-people-each--90681-neither-can-see-the-other-s-chromium/error-context.md
+
